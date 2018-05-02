@@ -1,11 +1,14 @@
-#include <iostream>
-#include "gtest/gtest.h"
 #include "RandomCount.h"
+#include <iostream>
 
 int main(int argc, char* argv[]){
+    RandomCount rc;
+    for(int i = 0; i < 80; i++)
+        rc.PrintRandomCount();
     
-    PrintRandomCount();
-    //testing::InitGoogleTest(&argc, argv);
-    //RUN_ALL_TESTS();
+    std::vector<int> statistic = rc.HistoricalStatistic();
+
+    for( auto result : statistic)
+        std::cout << result << std::endl;
     return 0;
 }
