@@ -10,5 +10,7 @@ int main(int argc, char* argv[]){
 
     for( auto result : statistic)
         std::cout << result << std::endl;
+
+    rc.PrintLastRandom();
     return 0;
 }

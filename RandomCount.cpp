@@ -3,10 +3,18 @@
 #include <iostream>
 #include <time.h>
 #include <random>
+#include <string.h>
 
 RandomCount::RandomCount(){
     srand(time(0));
+    file_.open("random.txt");
 }
+
+RandomCount::~RandomCount(){
+    if(file_.is_open())
+        file_.close();
+}
+
 
 void RandomCount::PrintRandomCount(){
     int number = rand() % 100;    
@@ -45,6 +53,20 @@ std::vector<int> RandomCount::HistoricalStatistic(){
     }
 
     return results;
+}
+
+void RandomCount::PrintLastRandom(){
+    if(!history_.empty()){
+        time_t current_time;
+        struct tm * timeinfo;
+        
+
+        time (&current_time);
+        timeinfo = localtime (&current_time);
+        char* time_c = asctime(timeinfo);
+        time_c[strlen(time_c) -1] = 0;
+        file_ << time_c << "\t" << history_.back();
+    }
 }
 
 void RandomCount::AddHistory(int number){
