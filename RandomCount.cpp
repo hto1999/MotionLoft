@@ -4,10 +4,11 @@
 #include <time.h>
 #include <random>
 #include <string.h>
+#include <thread>
+#include <condition_variable>
 
 RandomCount::RandomCount(){
     srand(time(0));
-    file_.open("random.txt");
 }
 
 RandomCount::~RandomCount(){
@@ -36,8 +37,17 @@ void RandomCount::PrintRandomCount(){
         result = 5;
     }
     AddHistory(result);
+    time_t current_time;
+    struct tm * timeinfo;
+
+    time (&current_time);
+    timeinfo = localtime (&current_time);
+    char* time_c = asctime(timeinfo);
+    time_c[strlen(time_c) -1] = 0;
+    std::string s = time_c;
+    s = s + "\t" + std::to_string(result);
+    PushRandomNumber(s);
  
-    std::cout << result << std::endl;
 }
 
 std::vector<int> RandomCount::HistoricalStatistic(){
@@ -55,22 +65,50 @@ std::vector<int> RandomCount::HistoricalStatistic(){
     return results;
 }
 
-void RandomCount::PrintLastRandom(){
-    if(!history_.empty()){
-        time_t current_time;
-        struct tm * timeinfo;
-        
 
-        time (&current_time);
-        timeinfo = localtime (&current_time);
-        char* time_c = asctime(timeinfo);
-        time_c[strlen(time_c) -1] = 0;
-        file_ << time_c << "\t" << history_.back();
-    }
+void Test(){
+
 }
+void RandomCount::StartWriter(){
+    if(!file_.is_open())
+        file_.open("random.txt");
+
+    std::thread ([this]{
+        while(true){
+            file_ << PopRandomNumber() << std::endl;   
+        }         
+    }).detach();
+    
+}
+
 
 void RandomCount::AddHistory(int number){
     history_.push_back(number);
+    
     while(history_.size() > 100)
         history_.erase(history_.begin());
+}
+
+void RandomCount::PushRandomNumber(std::string number){
+    std::unique_lock<std::mutex> lock(random_numbers_mutex_);
+    random_numbers_.push(number);
+
+    numbers_queue_condition_.notify_all();
+}
+
+std::string RandomCount::PopRandomNumber(){
+    std::string result;
+    std::unique_lock<std::mutex> lock(random_numbers_mutex_);
+    while(true){
+        if(!random_numbers_.empty()){
+            result = random_numbers_.front();
+            random_numbers_.pop();
+            break;
+        }
+        else{
+            numbers_queue_condition_.wait(lock);
+        }
+    }
+
+    return result;
 }
