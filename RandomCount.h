@@ -16,11 +16,11 @@ class RandomCount{
     std::vector<int> HistoricalStatistic();
     void StartWriter();
     
-    void PushRandomNumber(std::string number);
-    std::string PopRandomNumber();
 
     private:
     void AddHistory(int number);
+    void PushRandomNumber(int number);
+    std::string PopRandomNumber();
 
     std::vector<int> history_;
     std::ofstream file_;

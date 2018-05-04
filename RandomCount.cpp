@@ -18,36 +18,35 @@ RandomCount::~RandomCount(){
 
 
 void RandomCount::PrintRandomCount(){
-    int number = rand() % 100;    
-    int result;
- 
-    if(number >= 0 && number < 50){
-        result = 1;
-    }
-    else if(number < 75){
-        result = 2;
-    }
-    else if( number < 90){
-        result = 3;
-    }
-    else if( number < 95){
-        result = 4;
-    }
-    else {
-        result = 5;
-    }
-    AddHistory(result);
-    time_t current_time;
-    struct tm * timeinfo;
+    std::thread threads[5];
+    for(int i = 0; i < 5; i++){
+        threads[i] = std::thread([this]{
 
-    time (&current_time);
-    timeinfo = localtime (&current_time);
-    char* time_c = asctime(timeinfo);
-    time_c[strlen(time_c) -1] = 0;
-    std::string s = time_c;
-    s = s + "\t" + std::to_string(result);
-    PushRandomNumber(s);
- 
+        int number = rand() % 100;    
+        int result;
+    
+        if(number >= 0 && number < 50){
+            result = 1;
+        }
+        else if(number < 75){
+            result = 2;
+        }
+        else if( number < 90){
+            result = 3;
+        }
+        else if( number < 95){
+            result = 4;
+        }
+        else {
+            result = 5;
+        }
+        AddHistory(result);
+        PushRandomNumber(result);
+        });
+    } 
+
+    for(int i = 0; i < 5; i++)
+        threads[i].join();
 }
 
 std::vector<int> RandomCount::HistoricalStatistic(){
@@ -66,9 +65,6 @@ std::vector<int> RandomCount::HistoricalStatistic(){
 }
 
 
-void Test(){
-
-}
 void RandomCount::StartWriter(){
     if(!file_.is_open())
         file_.open("random.txt");
@@ -89,9 +85,18 @@ void RandomCount::AddHistory(int number){
         history_.erase(history_.begin());
 }
 
-void RandomCount::PushRandomNumber(std::string number){
+void RandomCount::PushRandomNumber(int number){
     std::unique_lock<std::mutex> lock(random_numbers_mutex_);
-    random_numbers_.push(number);
+    time_t current_time;
+    struct tm * timeinfo;
+
+    time (&current_time);
+    timeinfo = localtime (&current_time);
+    char* time_c = asctime(timeinfo);
+    time_c[strlen(time_c) -1] = 0;
+    std::string s = time_c;
+    s = s + "\t" + std::to_string(number);
+    random_numbers_.push(s);
 
     numbers_queue_condition_.notify_all();
 }
